@@ -41,8 +41,6 @@ async def random_button_next(update: Update, context):
         await random(update, context)
     await update.callback_query.answer()
 
-
-
 async def gpt(update, context):
     await send_image(update, context, "gpt")
     gpt_text_load = load_message("gpt")
