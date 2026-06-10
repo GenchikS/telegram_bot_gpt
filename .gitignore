@@ -1,0 +1,9 @@
+.idea
+.vent
+tokens.txt
+.env
+credentials.py
+__pycache__/
+#.DS_Store
+# додавання усіх підпапок
+**/.DS_Store
