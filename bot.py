@@ -4,6 +4,7 @@ from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes,
 from gpt import ChatGptService
 # from util import (load_message, load_prompt, send_text, send_image, send_text_buttons, show_main_menu,
 #                   default_callback_handler)
+# Використання всіх ф-цій з файлу util
 from util import *
 import credentials
 import random
@@ -27,6 +28,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ##########
 # 1.3 Ф-ція random для пошуку випадкових фактів
 async def random(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # 1.3.2 Присвоєння режиму використання значення random
     dialog.mode = "random"
     # print(dialog.mode)
     # 1.4 Завантаження фото з файлу images
@@ -124,6 +126,9 @@ async def talk_dialog_button_exit(update: Update, context):
     if query == "answer_exit":
         await start(update, context)
 
+
+###########
+# 1.3.3 Створення ф-ції перевірки режиму та запуску відповідної ф-ції
 async def status(update: Update, context):
     if dialog.mode == "random":
         await random_button_next(update, context)
@@ -134,7 +139,7 @@ async def status(update: Update, context):
     elif dialog.mode == "message":
         await talk_dialog(update, context)
 
-
+# 1.3.1 Використання ф-ції Dialog для створення режиму використання
 dialog = Dialog()
 dialog.mode = None
 
