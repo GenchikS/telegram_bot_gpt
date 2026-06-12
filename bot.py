@@ -115,12 +115,14 @@ async def talk_dialog(update: Update, context):
     prompt = load_prompt(dialog.name)
     # 1.27 Відправка промту та питання
     answer = await chat_gpt.send_question(prompt, question_text)
-    await send_text_buttons(update, context, answer, {"answer_closed": "Закінчити"})
+    await send_text_buttons(update, context, answer, {"answer_exit": "Закінчити діалог"})
 
-
-
-
-
+# 1.28 Ф-ція talk_dialog_exit закінчити діалог
+async def talk_dialog_button_exit(update: Update, context):
+    # 1.29 Отримання натискання кнопки Закінчити діалог
+    query = update.callback_query.data
+    if query == "answer_exit":
+        await start(update, context)
 
 async def status(update: Update, context):
     if dialog.mode == "random":
@@ -158,5 +160,7 @@ app.add_handler(CommandHandler("talk", talk))
 # 1.13 Запускаємо обрану кнопку зі всіма значеннями починаючи з "random_"
 app.add_handler(CallbackQueryHandler(random_button_next, pattern='^random_.*'))
 app.add_handler(CallbackQueryHandler(talk_button, pattern='^talk.*'))
+# 1.30 Створення обробника talk_dialog_button_exit для кнопки зі значенням answer
+app.add_handler(CallbackQueryHandler(talk_dialog_button_exit, pattern='^answer.*'))
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
 app.run_polling()
