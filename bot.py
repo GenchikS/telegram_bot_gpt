@@ -8,7 +8,7 @@ from util import *
 import credentials
 import random
 
-
+##########
 # 1.1 Ф-ція стартового меню
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = load_message('main')
@@ -24,8 +24,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # 'command': 'button text'
     })
 
+##########
 # 1.3 Ф-ція random для пошуку випадкових фактів
 async def random(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    dialog.mode = "random"
+    # print(dialog.mode)
     # 1.4 Завантаження фото з файлу images
     await send_image(update, context, 'random')
     # 1.5 Завантажує prompt (вхідні дані пошуку)
@@ -52,8 +55,11 @@ async def random_button_next(update: Update, context):
     # 1.12 вимкнення режиму очікування кнопки (переливання)
     await update.callback_query.answer()
 
+##########
 # 1.14 Ф-ція gpt для активації посилання на чат gpt
 async def gpt(update, context):
+    dialog.mode = "gpt"
+    # print(dialog.mode)
     await send_image(update, context, "gpt")
     gpt_text_load = load_message("gpt")
     # print(gpt_text_load)
@@ -63,7 +69,7 @@ async def gpt(update, context):
 async def gpt_dialog(update, context):
     # 1.17 збереження тексту питання
     question_text = update.message.text
-    # print(text)
+    # print(question_text)
     # 1.18 Завантажує prompt (вхідні дані пошуку)
     prompt = load_prompt("gpt")
     # 1.19 відправляємо в чат gpt prompt (вхідні дані пошуку), текст та отримання відповіді
@@ -71,14 +77,66 @@ async def gpt_dialog(update, context):
     # print(answer)
     await send_text(update, context, answer)
 
-# 1.20 Ф-ція talk для діалогу з відомою особистістю
+##########
+# 1.21 Ф-ція talk для діалогу з відомою особистістю
 async def talk(update, context):
+    dialog.mode = "talk"
     await send_image(update, context, "talk")
     talk_text_load = load_message("talk")
     # print(talk_text_load)
     await send_text(update, context, talk_text_load)
+    await send_text_buttons(update, context, talk_text_load,{"talk_cobain": "Курт Кобейн",
+                                                             "talk_queen": "Єлизавета II",
+                                                             "talk_tolkien": "Джон Толкін",
+                                                             "talk_nietzsche": "Фрідріх Ніцше",
+                                                             "talk_hawking": "Стівен Гокінг",
+                                                             })
+
+# 1.22 Ф-ція talk_button для обрання відомої особи для діалогу
+async def talk_button(update: Update, context):
+    query = update.callback_query.data
+    # 1.23 Збереження обраного персонажу
+    dialog.name = query
+    await update.callback_query.answer()
+    # print(query)
+    await send_image(update, context, query)
+    talk_text = load_message("talk_message")
+    await send_text(update, context, talk_text)
+    dialog.mode = "message"
 
 
+# 1.24 Ф-ція talk_dialog для повідомлень діалогу
+async def talk_dialog(update: Update, context):
+    # 1.25 Збереження введеного питання
+    question_text = update.message.text
+    # print(dialog.name)
+    # print(context)
+    # 1.26 Діставання збереженого персонажу та отримання промту на нього
+    prompt = load_prompt(dialog.name)
+    # 1.27 Відправка промту та питання
+    answer = await chat_gpt.send_question(prompt, question_text)
+    await send_text_buttons(update, context, answer, {"answer_closed": "Закінчити"})
+
+
+
+
+
+
+async def status(update: Update, context):
+    if dialog.mode == "random":
+        await random_button_next(update, context)
+    elif dialog.mode == "gpt":
+        await gpt_dialog(update, context)
+    elif dialog.mode == "talk":
+        await talk_button(update, context)
+    elif dialog.mode == "message":
+        await talk_dialog(update, context)
+
+
+dialog = Dialog()
+dialog.mode = None
+
+dialog.name = None
 
 chat_gpt = ChatGptService(credentials.ChatGPT_TOKEN)
 app = ApplicationBuilder().token(credentials.BOT_TOKEN).build()
@@ -90,12 +148,15 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("random", random))
 # 1.15 Запускаємо обране посилання "gpt" та ф-ції gpt
 app.add_handler(CommandHandler("gpt", gpt))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, gpt_dialog))
+# 1.20 Запускаємо ф-цію gpt_dialog, обробник діалогу
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, status))
 app.add_handler(CommandHandler("talk", talk))
+# app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, talk_dialog))
 
 
 # Зареєструвати обробник колбеку можна так:
 # 1.13 Запускаємо обрану кнопку зі всіма значеннями починаючи з "random_"
 app.add_handler(CallbackQueryHandler(random_button_next, pattern='^random_.*'))
-app.add_handler(CallbackQueryHandler(default_callback_handler))
+app.add_handler(CallbackQueryHandler(talk_button, pattern='^talk.*'))
+# app.add_handler(CallbackQueryHandler(default_callback_handler))
 app.run_polling()
