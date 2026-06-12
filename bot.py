@@ -87,12 +87,13 @@ async def talk(update, context):
     talk_text_load = load_message("talk")
     # print(talk_text_load)
     await send_text(update, context, talk_text_load)
-    await send_text_buttons(update, context, talk_text_load,{"talk_cobain": "Курт Кобейн",
-                                                             "talk_queen": "Єлизавета II",
-                                                             "talk_tolkien": "Джон Толкін",
-                                                             "talk_nietzsche": "Фрідріх Ніцше",
-                                                             "talk_hawking": "Стівен Гокінг",
-                                                             })
+    await send_text_buttons(update, context, talk_text_load,{
+        "talk_cobain": "Курт Кобейн",
+        "talk_queen": "Єлизавета II",
+        "talk_tolkien": "Джон Толкін",
+        "talk_nietzsche": "Фрідріх Ніцше",
+        "talk_hawking": "Стівен Гокінг",
+        })
 
 # 1.22 Ф-ція talk_button для обрання відомої особи для діалогу
 async def talk_button(update: Update, context):
@@ -124,10 +125,49 @@ async def talk_dialog_button_exit(update: Update, context):
     # 1.29 Отримання натискання кнопки Закінчити діалог
     query = update.callback_query.data
     if query == "answer_exit":
+        dialog.name = None
         await start(update, context)
 
+##########
+# 1.31 Створення ф-ції quiz, аналогічно як і talk
+async def quiz(update: Update, context):
+    dialog.mode = "quiz"
+    await send_image(update, context, "quiz")
+    # await send_text(update, context, load_message("quiz"))
+    await send_text_buttons(update, context, load_message("quiz"), {
+        "quiz_prog": "програмування python",
+        "quiz_math": "математика",
+        "quiz_biology": "біологія",
+    })
 
-###########
+async def quiz_button_dialog(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    # print(query)
+    quiz.list = query
+    prompt = load_prompt("quiz")
+    # print(prompt)
+    question_gpt = await chat_gpt.send_question(prompt, quiz.list)
+    # print(question_gpt)
+    quiz.questions = await send_text(update, context, question_gpt)
+
+async def quiz_dialog(update: Update, context):
+    # dialog.mode = "quiz"
+    user_answer = update.message.text
+    print(user_answer)
+    prompt = load_prompt("quiz_question")
+    # answer = await chat_gpt.send_question(prompt, f'{quiz.questions} + {user_answer}')
+    # print(answer)
+
+    # await send_text_buttons(update, context, answer, {
+    #     "quiz_more": "продовжуємо тему далі",
+    #     "quiz_next": "змінити тему",
+    #     "quiz_exit": "закінчити quiz"
+    # })
+
+
+
+##########
 # 1.3.3 Створення ф-ції перевірки режиму та запуску відповідної ф-ції
 async def status(update: Update, context):
     if dialog.mode == "random":
@@ -138,12 +178,17 @@ async def status(update: Update, context):
         await talk_button(update, context)
     elif dialog.mode == "message":
         await talk_dialog(update, context)
+    elif dialog.mode == "quiz":
+        await quiz_dialog(update, context)
+
+
 
 # 1.3.1 Використання ф-ції Dialog для створення режиму використання
 dialog = Dialog()
 dialog.mode = None
 
 dialog.name = None
+quiz.questions = None
 
 chat_gpt = ChatGptService(credentials.ChatGPT_TOKEN)
 app = ApplicationBuilder().token(credentials.BOT_TOKEN).build()
@@ -158,6 +203,8 @@ app.add_handler(CommandHandler("gpt", gpt))
 # 1.20 Запускаємо ф-цію gpt_dialog, обробник діалогу
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, status))
 app.add_handler(CommandHandler("talk", talk))
+app.add_handler(CommandHandler("quiz", quiz))
+
 # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, talk_dialog))
 
 
@@ -167,5 +214,7 @@ app.add_handler(CallbackQueryHandler(random_button_next, pattern='^random_.*'))
 app.add_handler(CallbackQueryHandler(talk_button, pattern='^talk.*'))
 # 1.30 Створення обробника talk_dialog_button_exit для кнопки зі значенням answer
 app.add_handler(CallbackQueryHandler(talk_dialog_button_exit, pattern='^answer.*'))
+app.add_handler(CallbackQueryHandler(quiz_button_dialog, pattern='^quiz.*'))
+
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
 app.run_polling()
