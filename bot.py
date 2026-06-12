@@ -154,16 +154,17 @@ async def quiz_button_dialog(update: Update, context):
 async def quiz_dialog(update: Update, context):
     # dialog.mode = "quiz"
     user_answer = update.message.text
-    print(user_answer)
+    # print(user_answer)
     prompt = load_prompt("quiz_question")
-    # answer = await chat_gpt.send_question(prompt, f'{quiz.questions} + {user_answer}')
+    answer = f'{quiz.questions} + {user_answer}'
+    answer_gpt = await chat_gpt.send_question(prompt, answer)
     # print(answer)
 
-    # await send_text_buttons(update, context, answer, {
-    #     "quiz_more": "продовжуємо тему далі",
-    #     "quiz_next": "змінити тему",
-    #     "quiz_exit": "закінчити quiz"
-    # })
+    await send_text_buttons(update, context, answer_gpt, {
+        "quiz_more": "продовжуємо тему далі",
+        "quiz_next": "змінити тему",
+        "quiz_exit": "закінчити quiz"
+    })
 
 
 
