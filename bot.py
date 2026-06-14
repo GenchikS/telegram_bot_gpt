@@ -35,6 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     })
 
 ##########
+# task_1
 # 1.3 Ф-ція random для пошуку випадкових фактів
 async def random(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1.3.2 Присвоєння режиму використання значення random
@@ -69,6 +70,7 @@ async def random_button_next(update: Update, context):
     await update.callback_query.answer()
 
 ##########
+# task_2
 # 1.14 Ф-ція gpt для активації посилання на чат gpt
 async def gpt(update, context):
     dialog.mode = "gpt"
@@ -91,6 +93,7 @@ async def gpt_dialog(update, context):
     await send_text(update, context, answer)
 
 ##########
+# task_3
 # 1.21 Ф-ція talk для діалогу з відомою особистістю
 async def talk(update, context):
     dialog.mode = "talk"
@@ -141,6 +144,7 @@ async def talk_dialog_button_exit(update: Update, context):
         await start(update, context)
 
 ##########
+# task_4
 # 1.31 Створення ф-ції quiz, аналогічно як і talk
 async def quiz(update: Update, context):
     dialog.mode = "quiz"
@@ -199,6 +203,7 @@ async def quiz_dialog_button_next(update: Update, context):
         await start(update, context)
 
 ##########
+# task_5
 # 1.37 Ф-ція recommendations рекомендації фільмів, музики, книг
 async def recommendations(update: Update, context):
     dialog.mode = "recommendations"
@@ -411,14 +416,15 @@ async def status(update: Update, context):
 
 
 # 1.3.1 Використання ф-ції Dialog для створення режиму використання
+# task_1_2
 dialog = Dialog()
 dialog.mode = None
-
+# task_3
 dialog.name = None
-
+# task_4
 quiz.list_thema = None
 quiz.questions = None
-
+# task_5
 recommendations.list_genre = None
 
 chat_gpt = ChatGptService(credentials.ChatGPT_TOKEN)
@@ -437,9 +443,7 @@ app.add_handler(CommandHandler("talk", talk))
 app.add_handler(CommandHandler("quiz", quiz))
 app.add_handler(CommandHandler("recommendations", recommendations))
 
-# app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, talk_dialog))
-
-
+#########
 # Зареєструвати обробник колбеку можна так:
 # 1.13 Запускаємо обрану кнопку зі всіма значеннями починаючи з "random_"
 app.add_handler(CallbackQueryHandler(random_button_next, pattern='^random_.*'))
