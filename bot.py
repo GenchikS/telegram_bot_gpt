@@ -9,9 +9,18 @@ from util import *
 import credentials
 import random
 
+
 ##########
 # 1.1 Ф-ція стартового меню
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Можливість відслідковувати id користувачів
+    # id_user = update.message.from_user.id
+    # print("id_user", id_user)
+    # 1.36 перевірка на наявність режиму. Щоб не реагувати на вибір старт
+    if dialog.mode not in [None, 'default']:
+        return
+    # 1.35 Додавання дефолтного значення при заходу на стартове меню
+    dialog.mode = 'default'
     text = load_message('main')
     await send_image(update, context, 'main')
     await send_text(update, context, text)
@@ -20,9 +29,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'random': 'Дізнатися випадковий цікавий факт 🧠',
         'gpt': 'Задати питання чату GPT 🤖',
         'talk': 'Поговорити з відомою особистістю 👤',
-        'quiz': 'Взяти участь у квізі ❓'
-        # Додати команду в меню можна так:
-        # 'command': 'button text'
+        'quiz': 'Взяти участь у квізі ❓',
+# 1.34 Додавання таска 5 "Рекомендації щодо фільмів та книг"
+        'recommendations': 'Рекомендації фільми, книги, музика...'
     })
 
 ##########
@@ -49,6 +58,8 @@ async def random_button_next(update: Update, context):
     query = update.callback_query.data
     # print(query)
     if query == "random_closed":
+        # 1.37 переводимо режим в дефолтний
+        dialog.mode = 'default'
         # 1.11.1 При даному виборі виклик ф-ції start, (повернення) на стартову сторінку
         await start(update, context)
     elif query == "random_next":
@@ -126,6 +137,7 @@ async def talk_dialog_button_exit(update: Update, context):
     query = update.callback_query.data
     if query == "answer_exit":
         dialog.name = None
+        dialog.mode = 'default'
         await start(update, context)
 
 ##########
@@ -144,7 +156,7 @@ async def quiz_button_dialog(update: Update, context):
     await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
-    # 1.1.32 перевірка наявності теми для продовження
+    # 1.32 перевірка наявності теми для продовження
     if quiz.list_thema is None:
         quiz.list_thema = query
     elif quiz.list_thema is not None:
@@ -154,7 +166,7 @@ async def quiz_button_dialog(update: Update, context):
     # print(prompt)
     question_gpt = await chat_gpt.send_question(prompt, quiz.list_thema)
     # print(question_gpt)
-    # 1.1.33 створення списку запитання для подальшої генерації в відповіді
+    # 1.33 створення списку запитання для подальшої генерації в відповіді
     quiz.questions = await send_text(update, context, question_gpt)
 
 async def quiz_dialog(update: Update, context):
@@ -184,7 +196,25 @@ async def quiz_dialog_button_next(update: Update, context):
     elif query == "thema_exit":
         quiz.list_thema = None
         quiz.questions = None
+        dialog.mode = 'default'
         await start(update, context)
+
+##########
+# 1.37 Ф-ція recommendations рекомендації фільмів, музики, книг
+async def recommendations(update: Update, context):
+    await send_image(update, context, "recommendations")
+    await send_text_buttons(update, context, load_message("recommendations"), {
+        "recommendations_movies": "фільми",
+        "recommendations_sounds": "музика",
+        "recommendations_books": "книга",
+    })
+
+async def recommendations_dialog(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    print("query", query)
+
+
 
 
 ##########
@@ -200,7 +230,8 @@ async def status(update: Update, context):
         await talk_dialog(update, context)
     elif dialog.mode == "quiz":
         await quiz_dialog(update, context)
-
+    elif dialog.mode == "recommendations":
+        await recommendations(update, context)
 
 
 # 1.3.1 Використання ф-ції Dialog для створення режиму використання
@@ -211,6 +242,7 @@ dialog.name = None
 
 quiz.list_thema = None
 quiz.questions = None
+
 
 chat_gpt = ChatGptService(credentials.ChatGPT_TOKEN)
 app = ApplicationBuilder().token(credentials.BOT_TOKEN).build()
@@ -226,6 +258,7 @@ app.add_handler(CommandHandler("gpt", gpt))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, status))
 app.add_handler(CommandHandler("talk", talk))
 app.add_handler(CommandHandler("quiz", quiz))
+app.add_handler(CommandHandler("recommendations", recommendations))
 
 # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, talk_dialog))
 
