@@ -220,13 +220,13 @@ async def recommendations_dialog(update: Update, context):
     elif query == "recommendations_sounds":
         await recommendations_dialog_sounds(update, context)
     elif query == "recommendations_books":
-        pass
+        await recommendations_dialog_books(update, context)
     elif query == "recommendations_exit":
         recommendations.list_genre = None
         dialog.mode = 'default'
         await start(update, context)
 
-
+# Movies
 async def recommendations_dialog_movies(update: Update, context):
     await update.callback_query.answer()
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
@@ -236,7 +236,7 @@ async def recommendations_dialog_movies(update: Update, context):
         "movies_genre_fantasy": "Фантастика",
         "movies_genre_comedy": "Комедія",
         "movies_genre_drama": "Мелодрама та Драма",
-        "movies_genre_goror": "Фільми жахів",
+        "movies_genre_horror": "Фільми жахів",
         "movies_genre_handy": "Пригоди",
         "movies_genre_fantasys": "Фентезі",
         "movies_genre_historical": "Історичний фільм",
@@ -285,7 +285,7 @@ async def recommendations_dialog_movies_buttons(update: Update, context):
         recommendations.list_genre = None
         await recommendations(update, context)
 
-
+# Sounds
 async def recommendations_dialog_sounds(update: Update, context):
     await update.callback_query.answer()
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
@@ -340,8 +340,57 @@ async def recommendations_dialog_sounds_buttons(update: Update, context):
         await recommendations(update, context)
 
 
+# Books
+async def recommendations_dialog_books(update: Update, context):
+    await update.callback_query.answer()
+    await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
+        "books_genre_fantasy": "Фантастика та фентезі",
+        "books_genre_detectives": "Детективи та трилери",
+        "books_genre_novels": "Романи про кохання (любовні)",
+        "books_genre_prose": "Історична проза",
+        "books_genre_horror": "Жахи (горор) та містика",
+        "books_genre_fiction": "Художня література",
+        "books_genre_non_fiction": "Нон-фікшн",
+        "books_genre_exit": "закінчити пошук"
+    })
 
 
+async def recommendations_dialog_books_genre(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    if query == "books_genre_exit":
+        return await recommendations(update, context)
+
+    if recommendations.list_genre is None:
+        recommendations.list_genre = query
+    elif recommendations.list_genre is not None:
+        recommendations.list_genre = recommendations.list_genre
+
+    await send_text(update, context, "Ось 3 рекомендації, що подивитися на вечір!")
+    prompt = load_prompt("recommendations_books")
+    # print(prompt)
+    for i in range (1, 4):
+        answer = await chat_gpt.send_question(prompt, recommendations.list_genre)
+        await send_text(update, context, f'Рекомендація {i}\n' + answer)
+
+    await send_text_buttons(update, context, "Гарного вечора!", {
+        "books_more": "пошук рекомендацій далі",
+        "books_next": "змінити жанр",
+        "books_exit": "закінчити пошук"
+    })
+
+async def recommendations_dialog_books_buttons(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    # print(query)
+    if query == "books_more":
+        await recommendations_dialog_books_genre(update, context)
+    elif query == "books_next":
+        recommendations.list_genre = None
+        await recommendations_dialog_books(update, context)
+    elif query == "books_exit":
+        recommendations.list_genre = None
+        await recommendations(update, context)
 
 
 ##########
@@ -401,10 +450,11 @@ app.add_handler(CallbackQueryHandler(quiz_button_dialog, pattern='^quiz.*'))
 app.add_handler(CallbackQueryHandler(quiz_dialog_button_next, pattern='^thema.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog, pattern='^recommendations.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_movies_genre, pattern='^movies_genre.*'))
-app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_genre, pattern='^sounds_genre.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_movies_buttons, pattern='^mov.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_genre, pattern='^sounds_genre.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_buttons, pattern='^muz.*'))
-
+app.add_handler(CallbackQueryHandler(recommendations_dialog_books_genre, pattern='^books_genre.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog_books_buttons, pattern='^books.*'))
 
 
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
