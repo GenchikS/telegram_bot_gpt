@@ -34,6 +34,24 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'recommendations': 'Рекомендації фільми, книги, музика...'
     })
 
+
+##########
+# 1.3.3 Створення ф-ції перевірки режиму та запуску відповідної ф-ції
+async def status(update: Update, context):
+    if dialog.mode == "random":
+        await random_button_next(update, context)
+    elif dialog.mode == "gpt":
+        await gpt_dialog(update, context)
+    elif dialog.mode == "talk":
+        await talk_button(update, context)
+    elif dialog.mode == "message":
+        await talk_dialog(update, context)
+    elif dialog.mode == "quiz":
+        await quiz_dialog(update, context)
+    elif dialog.mode == "recommendations":
+        await recommendations(update, context)
+
+
 ##########
 # task_1
 # 1.3 Ф-ція random для пошуку випадкових фактів
@@ -415,22 +433,6 @@ async def recommendations_dialog_books_buttons(update: Update, context):
         recommendations.list_genre = None
         await recommendations(update, context)
 
-
-##########
-# 1.3.3 Створення ф-ції перевірки режиму та запуску відповідної ф-ції
-async def status(update: Update, context):
-    if dialog.mode == "random":
-        await random_button_next(update, context)
-    elif dialog.mode == "gpt":
-        await gpt_dialog(update, context)
-    elif dialog.mode == "talk":
-        await talk_button(update, context)
-    elif dialog.mode == "message":
-        await talk_dialog(update, context)
-    elif dialog.mode == "quiz":
-        await quiz_dialog(update, context)
-    elif dialog.mode == "recommendations":
-        await recommendations(update, context)
 
 
 # 1.3.1 Використання ф-ції Dialog для створення режиму використання
