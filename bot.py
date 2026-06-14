@@ -112,6 +112,9 @@ async def talk(update, context):
 # 1.22 Ф-ція talk_button для обрання відомої особи для діалогу
 async def talk_button(update: Update, context):
     query = update.callback_query.data
+    if query is None:
+        return
+
     # 1.23 Збереження обраного персонажу
     dialog.name = query
     await update.callback_query.answer()
@@ -120,7 +123,6 @@ async def talk_button(update: Update, context):
     talk_text = load_message("talk_message")
     await send_text(update, context, talk_text)
     dialog.mode = "message"
-
 
 # 1.24 Ф-ція talk_dialog для повідомлень діалогу
 async def talk_dialog(update: Update, context):
