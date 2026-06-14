@@ -154,14 +154,20 @@ async def quiz(update: Update, context):
         "quiz_prog": "програмування python",
         "quiz_math": "математика",
         "quiz_biology": "біологія",
+        "quiz_exit": "закінчити quiz"
     })
 
 async def quiz_button_dialog(update: Update, context):
     await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
+
+    if query == "quiz_exit":
+        quiz.list_thema = None
+        dialog.mode = 'default'
+        return await start(update, context)
     # 1.32 перевірка наявності теми для продовження
-    if quiz.list_thema is None:
+    elif quiz.list_thema is None:
         quiz.list_thema = query
     elif quiz.list_thema is not None:
         quiz.list_thema = quiz.list_thema
