@@ -210,7 +210,6 @@ async def recommendations(update: Update, context):
         "recommendations_exit": "закінчити рекомендації",
     })
 
-
 async def recommendations_dialog(update: Update, context):
     await update.callback_query.answer()
     query = update.callback_query.data
@@ -219,7 +218,7 @@ async def recommendations_dialog(update: Update, context):
     if query == "recommendations_movies":
         await recommendations_dialog_movies(update, context)
     elif query == "recommendations_sounds":
-        pass
+        await recommendations_dialog_sounds(update, context)
     elif query == "recommendations_books":
         pass
     elif query == "recommendations_exit":
@@ -261,7 +260,7 @@ async def recommendations_dialog_movies_genre(update: Update, context):
         recommendations.list_genre = recommendations.list_genre
 
     await send_text(update, context, "Ось 3 рекомендації, що подивитися на вечір!")
-    prompt = load_prompt("recommendations")
+    prompt = load_prompt("recommendations_movies")
     # print(prompt)
     for i in range (1, 4):
         answer = await chat_gpt.send_question(prompt, recommendations.list_genre)
@@ -285,6 +284,64 @@ async def recommendations_dialog_movies_buttons(update: Update, context):
     elif query == "mov_exit":
         recommendations.list_genre = None
         await recommendations(update, context)
+
+
+async def recommendations_dialog_sounds(update: Update, context):
+    await update.callback_query.answer()
+    await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
+        "sounds_genre_pop": "Поп (Популярна)",
+        "sounds_genre_rock": "Рок музика",
+        "sounds_genre_electric": "Електронна танцювальна музика",
+        "sounds_genre_rep": "Хіп-хоп та реп",
+        "sounds_genre_jazz": "Джаз",
+        "sounds_genre_classic": "Класична музика ",
+        "sounds_genre_blues": "Блюз",
+        "sounds_genre_folk": "Фолк",
+        "sounds_genre_rhythm": "R&B (Ритм-н-блюз)",
+        "sounds_genre_exit": "закінчити пошук"
+    })
+
+
+async def recommendations_dialog_sounds_genre(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    if query == "sounds_genre_exit":
+        return await recommendations(update, context)
+
+    if recommendations.list_genre is None:
+        recommendations.list_genre = query
+    elif recommendations.list_genre is not None:
+        recommendations.list_genre = recommendations.list_genre
+
+    await send_text(update, context, "Ось 3 рекомендації, що подивитися на вечір!")
+    prompt = load_prompt("recommendations_sounds")
+    # print(prompt)
+    for i in range (1, 4):
+        answer = await chat_gpt.send_question(prompt, recommendations.list_genre)
+        await send_text(update, context, f'Рекомендація {i}\n' + answer)
+
+    await send_text_buttons(update, context, "Гарного вечора!", {
+        "muz_more": "пошук рекомендацій далі",
+        "muz_next": "змінити жанр",
+        "muz_exit": "закінчити пошук"
+    })
+
+async def recommendations_dialog_sounds_buttons(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    # print(query)
+    if query == "muz_more":
+        await recommendations_dialog_sounds_genre(update, context)
+    elif query == "muz_next":
+        recommendations.list_genre = None
+        await recommendations_dialog_sounds(update, context)
+    elif query == "muz_exit":
+        recommendations.list_genre = None
+        await recommendations(update, context)
+
+
+
+
 
 
 ##########
@@ -344,7 +401,10 @@ app.add_handler(CallbackQueryHandler(quiz_button_dialog, pattern='^quiz.*'))
 app.add_handler(CallbackQueryHandler(quiz_dialog_button_next, pattern='^thema.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog, pattern='^recommendations.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_movies_genre, pattern='^movies_genre.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_genre, pattern='^sounds_genre.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_movies_buttons, pattern='^mov.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_buttons, pattern='^muz.*'))
+
 
 
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
