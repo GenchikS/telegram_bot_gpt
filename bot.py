@@ -80,6 +80,7 @@ async def gpt(update, context):
     # print(gpt_text_load)
     await send_text(update, context, gpt_text_load)
 
+
 # 1.16 Ф-ція gpt_dialog для написання, відправки питання, та отримання відповіді з чат gpt
 async def gpt_dialog(update, context):
     # 1.17 збереження тексту питання
@@ -90,7 +91,16 @@ async def gpt_dialog(update, context):
     # 1.19 відправляємо в чат gpt prompt (вхідні дані пошуку), текст та отримання відповіді
     answer = await chat_gpt.send_question(prompt, question_text)
     # print(answer)
-    await send_text(update, context, answer)
+    await send_text_buttons(update, context, answer, {
+        "gpt_exit": "Закінчити"})
+
+async def gpt_dialog_button_exit(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    if query == "gpt_exit":
+        dialog.mode = 'default'
+        await start(update, context)
+
 
 ##########
 # task_3
@@ -453,6 +463,7 @@ app.add_handler(CommandHandler("recommendations", recommendations))
 
 #########
 # Зареєструвати обробник колбеку можна так:
+app.add_handler(CallbackQueryHandler(gpt_dialog_button_exit, pattern='^gpt_.*'))
 # 1.13 Запускаємо обрану кнопку зі всіма значеннями починаючи з "random_"
 app.add_handler(CallbackQueryHandler(random_button_next, pattern='^random_.*'))
 app.add_handler(CallbackQueryHandler(talk_button, pattern='^talk.*'))
