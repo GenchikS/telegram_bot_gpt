@@ -144,11 +144,17 @@ async def quiz_button_dialog(update: Update, context):
     await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
-    quiz.list = query
+    # 1.1.32 перевірка наявності теми для продовження
+    if quiz.list_thema is None:
+        quiz.list_thema = query
+    elif quiz.list_thema is not None:
+        quiz.list_thema = quiz.list_thema
+
     prompt = load_prompt("quiz")
     # print(prompt)
-    question_gpt = await chat_gpt.send_question(prompt, quiz.list)
+    question_gpt = await chat_gpt.send_question(prompt, quiz.list_thema)
     # print(question_gpt)
+    # 1.1.33 створення списку запитання для подальшої генерації в відповіді
     quiz.questions = await send_text(update, context, question_gpt)
 
 async def quiz_dialog(update: Update, context):
@@ -161,11 +167,24 @@ async def quiz_dialog(update: Update, context):
     # print(answer)
 
     await send_text_buttons(update, context, answer_gpt, {
-        "quiz_more": "продовжуємо тему далі",
-        "quiz_next": "змінити тему",
-        "quiz_exit": "закінчити quiz"
+        "thema_more": "продовжуємо тему далі",
+        "thema_next": "змінити тему",
+        "thema_exit": "закінчити quiz"
     })
 
+async def quiz_dialog_button_next(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    if query == "thema_more":
+        await quiz_button_dialog(update, context)
+    elif query == "thema_next":
+        quiz.list_thema = None
+        quiz.questions = None
+        await quiz(update, context)
+    elif query == "thema_exit":
+        quiz.list_thema = None
+        quiz.questions = None
+        await start(update, context)
 
 
 ##########
@@ -189,6 +208,8 @@ dialog = Dialog()
 dialog.mode = None
 
 dialog.name = None
+
+quiz.list_thema = None
 quiz.questions = None
 
 chat_gpt = ChatGptService(credentials.ChatGPT_TOKEN)
@@ -216,6 +237,8 @@ app.add_handler(CallbackQueryHandler(talk_button, pattern='^talk.*'))
 # 1.30 Створення обробника talk_dialog_button_exit для кнопки зі значенням answer
 app.add_handler(CallbackQueryHandler(talk_dialog_button_exit, pattern='^answer.*'))
 app.add_handler(CallbackQueryHandler(quiz_button_dialog, pattern='^quiz.*'))
+app.add_handler(CallbackQueryHandler(quiz_dialog_button_next, pattern='^thema.*'))
+
 
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
 app.run_polling()
