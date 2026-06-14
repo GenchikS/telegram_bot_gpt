@@ -170,7 +170,6 @@ async def quiz_button_dialog(update: Update, context):
     quiz.questions = await send_text(update, context, question_gpt)
 
 async def quiz_dialog(update: Update, context):
-    # dialog.mode = "quiz"
     user_answer = update.message.text
     # print(user_answer)
     prompt = load_prompt("quiz_question")
@@ -202,19 +201,90 @@ async def quiz_dialog_button_next(update: Update, context):
 ##########
 # 1.37 Ф-ція recommendations рекомендації фільмів, музики, книг
 async def recommendations(update: Update, context):
+    dialog.mode = "recommendations"
     await send_image(update, context, "recommendations")
-    await send_text_buttons(update, context, load_message("recommendations"), {
+    await send_text_buttons(update, context, "Спробуй підібрати щось на вечір!", {
         "recommendations_movies": "фільми",
         "recommendations_sounds": "музика",
         "recommendations_books": "книга",
+        "recommendations_exit": "закінчити рекомендації",
     })
+
 
 async def recommendations_dialog(update: Update, context):
     await update.callback_query.answer()
     query = update.callback_query.data
-    print("query", query)
+    # recommendations.list_thema = query
+    # print("recommendations.list_thema", recommendations.list_thema)
+    if query == "recommendations_movies":
+        await recommendations_dialog_movies(update, context)
+    elif query == "recommendations_sounds":
+        pass
+    elif query == "recommendations_books":
+        pass
+    elif query == "recommendations_exit":
+        recommendations.list_genre = None
+        dialog.mode = 'default'
+        await start(update, context)
 
 
+async def recommendations_dialog_movies(update: Update, context):
+    await update.callback_query.answer()
+    await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
+        "movies_genre_action": "Екшн (Бойовик)",
+        "movies_genre_detective": "Детектив",
+        "movies_genre_thriller": "Трилер",
+        "movies_genre_fantasy": "Фантастика",
+        "movies_genre_comedy": "Комедія",
+        "movies_genre_drama": "Мелодрама та Драма",
+        "movies_genre_goror": "Фільми жахів",
+        "movies_genre_handy": "Пригоди",
+        "movies_genre_fantasys": "Фентезі",
+        "movies_genre_historical": "Історичний фільм",
+        "movies_genre_musical": "Мюзикл",
+        "movies_genre_western": "Вестерн",
+        "movies_genre_artistic": "Художнє (ігрове) ",
+        "movies_genre_documentary": "Документальне ",
+        "movies_genre_animation": "Анімація (мультиплікація)",
+        "movies_genre_exit": "закінчити пошук"
+    })
+
+async def recommendations_dialog_movies_genre(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    if query == "movies_genre_exit":
+        return await recommendations(update, context)
+
+    if recommendations.list_genre is None:
+        recommendations.list_genre = query
+    elif recommendations.list_genre is not None:
+        recommendations.list_genre = recommendations.list_genre
+
+    await send_text(update, context, "Ось 3 рекомендації, що подивитися на вечір!")
+    prompt = load_prompt("recommendations")
+    # print(prompt)
+    for i in range (1, 4):
+        answer = await chat_gpt.send_question(prompt, recommendations.list_genre)
+        await send_text(update, context, f'Рекомендація {i}\n' + answer)
+
+    await send_text_buttons(update, context, "Гарного вечора!", {
+        "mov_more": "пошук рекомендацій далі",
+        "mov_next": "змінити жанр",
+        "mov_exit": "закінчити пошук"
+    })
+
+async def recommendations_dialog_movies_buttons(update: Update, context):
+    await update.callback_query.answer()
+    query = update.callback_query.data
+    # print(query)
+    if query == "mov_more":
+        await recommendations_dialog_movies_genre(update, context)
+    elif query == "mov_next":
+        recommendations.list_genre = None
+        await recommendations_dialog_movies(update, context)
+    elif query == "mov_exit":
+        recommendations.list_genre = None
+        await recommendations(update, context)
 
 
 ##########
@@ -243,6 +313,7 @@ dialog.name = None
 quiz.list_thema = None
 quiz.questions = None
 
+recommendations.list_genre = None
 
 chat_gpt = ChatGptService(credentials.ChatGPT_TOKEN)
 app = ApplicationBuilder().token(credentials.BOT_TOKEN).build()
@@ -271,6 +342,9 @@ app.add_handler(CallbackQueryHandler(talk_button, pattern='^talk.*'))
 app.add_handler(CallbackQueryHandler(talk_dialog_button_exit, pattern='^answer.*'))
 app.add_handler(CallbackQueryHandler(quiz_button_dialog, pattern='^quiz.*'))
 app.add_handler(CallbackQueryHandler(quiz_dialog_button_next, pattern='^thema.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog, pattern='^recommendations.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog_movies_genre, pattern='^movies_genre.*'))
+app.add_handler(CallbackQueryHandler(recommendations_dialog_movies_buttons, pattern='^mov.*'))
 
 
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
