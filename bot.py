@@ -10,7 +10,7 @@ import credentials
 import random
 
 
-##########
+####################
 # 1.1 Ф-ція стартового меню
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Можливість відслідковувати id користувачів
@@ -35,7 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     })
 
 
-##########
+####################
 # 1.3.3 Створення ф-ції перевірки режиму та запуску відповідної ф-ції
 async def status(update: Update, context):
     if dialog.mode == "random":
@@ -52,7 +52,7 @@ async def status(update: Update, context):
         await recommendations(update, context)
 
 
-##########
+####################
 # task_1
 # 1.3 Ф-ція random для пошуку випадкових фактів
 async def random(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -87,7 +87,7 @@ async def random_button_next(update: Update, context):
     # 1.12 вимкнення режиму очікування кнопки (переливання)
     await update.callback_query.answer()
 
-##########
+####################
 # task_2
 # 1.14 Ф-ція gpt для активації посилання на чат gpt
 async def gpt(update, context):
@@ -120,7 +120,7 @@ async def gpt_dialog_button_exit(update: Update, context):
         await start(update, context)
 
 
-##########
+####################
 # task_3
 # 1.21 Ф-ція talk для діалогу з відомою особистістю
 async def talk(update, context):
@@ -173,13 +173,12 @@ async def talk_dialog_button_exit(update: Update, context):
         dialog.mode = 'default'
         await start(update, context)
 
-##########
+####################
 # task_4
 # 1.31 Створення ф-ції quiz, аналогічно як і talk
 async def quiz(update: Update, context):
     dialog.mode = "quiz"
     await send_image(update, context, "quiz")
-    # await send_text(update, context, load_message("quiz"))
     await send_text_buttons(update, context, load_message("quiz"), {
         "quiz_prog": "програмування python",
         "quiz_math": "математика",
@@ -196,7 +195,7 @@ async def quiz_button_dialog(update: Update, context):
         quiz.list_thema = None
         dialog.mode = 'default'
         return await start(update, context)
-    # 1.32 перевірка наявності теми для продовження
+    # # 1.32 перевірка наявності теми для продовження
     elif quiz.list_thema is None:
         quiz.list_thema = query
     elif quiz.list_thema is not None:
@@ -207,21 +206,20 @@ async def quiz_button_dialog(update: Update, context):
     question_gpt = await chat_gpt.send_question(prompt, quiz.list_thema)
     # print(question_gpt)
     # 1.33 створення списку запитання для подальшої генерації в відповіді
-    quiz.questions = await send_text(update, context, question_gpt)
+    question_text = await send_text(update, context, question_gpt)
+    # print("question_text", question_text.text)
 
 async def quiz_dialog(update: Update, context):
     user_answer = update.message.text
-    # print(user_answer)
-    prompt = load_prompt("quiz_question")
-    answer = f'{quiz.questions} + {user_answer}'
-    answer_gpt = await chat_gpt.send_question(prompt, answer)
-    # print(answer)
-
+    # print("user_answer", user_answer)
+    answer_gpt = await chat_gpt.add_message(user_answer)
+    # print("answer_gpt", answer_gpt)
     await send_text_buttons(update, context, answer_gpt, {
         "thema_more": "продовжуємо тему далі",
         "thema_next": "змінити тему",
         "thema_exit": "закінчити quiz"
     })
+    # await send_text(update, context, f"Загальна кількість: {count_total}. Вірно: {count_ok}")
 
 async def quiz_dialog_button_next(update: Update, context):
     await update.callback_query.answer()
@@ -229,16 +227,14 @@ async def quiz_dialog_button_next(update: Update, context):
     if query == "thema_more":
         await quiz_button_dialog(update, context)
     elif query == "thema_next":
-        quiz.list_thema = None
-        quiz.questions = None
+        quiz.list_thema = quiz.questions = None
         await quiz(update, context)
     elif query == "thema_exit":
-        quiz.list_thema = None
-        quiz.questions = None
+        quiz.list_thema = quiz.questions = None
         dialog.mode = 'default'
         await start(update, context)
 
-##########
+####################
 # task_5
 # 1.37 Ф-ція recommendations рекомендації фільмів, музики, книг
 async def recommendations(update: Update, context):
@@ -342,7 +338,6 @@ async def recommendations_dialog_sounds(update: Update, context):
         "sounds_genre_exit": "закінчити пошук"
     })
 
-
 async def recommendations_dialog_sounds_genre(update: Update, context):
     await update.callback_query.answer()
     query = update.callback_query.data
@@ -380,7 +375,6 @@ async def recommendations_dialog_sounds_buttons(update: Update, context):
         recommendations.list_genre = None
         await recommendations(update, context)
 
-
 # Books
 async def recommendations_dialog_books(update: Update, context):
     await update.callback_query.answer()
@@ -394,7 +388,6 @@ async def recommendations_dialog_books(update: Update, context):
         "books_genre_non_fiction": "Нон-фікшн",
         "books_genre_exit": "закінчити пошук"
     })
-
 
 async def recommendations_dialog_books_genre(update: Update, context):
     await update.callback_query.answer()
