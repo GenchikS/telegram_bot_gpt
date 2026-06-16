@@ -113,11 +113,11 @@ async def gpt_dialog(update, context):
         "gpt_exit": "Закінчити"})
 
 async def gpt_dialog_button_exit(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     if query == "gpt_exit":
         dialog.mode = 'default'
         await start(update, context)
+    await update.callback_query.answer()
 
 
 ####################
@@ -140,17 +140,17 @@ async def talk(update, context):
 # 1.22 Ф-ція talk_button для обрання відомої особи для діалогу
 async def talk_button(update: Update, context):
     query = update.callback_query.data
+    # print(query)
     if query is None:
         return
 
     # 1.23 Збереження обраного персонажу
     dialog.name = query
-    await update.callback_query.answer()
-    # print(query)
     await send_image(update, context, query)
     talk_text = load_message("talk_message")
     await send_text(update, context, talk_text)
     dialog.mode = "message"
+    await update.callback_query.answer()
 
 # 1.24 Ф-ція talk_dialog для повідомлень діалогу
 async def talk_dialog(update: Update, context):
@@ -172,6 +172,7 @@ async def talk_dialog_button_exit(update: Update, context):
         dialog.name = None
         dialog.mode = 'default'
         await start(update, context)
+    await update.callback_query.answer()
 
 ####################
 # task_4
@@ -187,7 +188,6 @@ async def quiz(update: Update, context):
     })
 
 async def quiz_button_dialog(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
 
@@ -208,6 +208,7 @@ async def quiz_button_dialog(update: Update, context):
     # 1.33 створення списку запитання для подальшої генерації в відповіді
     question_text = await send_text(update, context, question_gpt)
     # print("question_text", question_text.text)
+    await update.callback_query.answer()
 
 async def quiz_dialog(update: Update, context):
     user_answer = update.message.text
@@ -222,7 +223,6 @@ async def quiz_dialog(update: Update, context):
     # await send_text(update, context, f"Загальна кількість: {count_total}. Вірно: {count_ok}")
 
 async def quiz_dialog_button_next(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     if query == "thema_more":
         await quiz_button_dialog(update, context)
@@ -233,6 +233,7 @@ async def quiz_dialog_button_next(update: Update, context):
         quiz.list_thema = quiz.questions = None
         dialog.mode = 'default'
         await start(update, context)
+    await update.callback_query.answer()
 
 ####################
 # task_5
@@ -248,7 +249,6 @@ async def recommendations(update: Update, context):
     })
 
 async def recommendations_dialog(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     # recommendations.list_thema = query
     # print("recommendations.list_thema", recommendations.list_thema)
@@ -262,10 +262,10 @@ async def recommendations_dialog(update: Update, context):
         recommendations.list_genre = None
         dialog.mode = 'default'
         await start(update, context)
+    await update.callback_query.answer()
 
 # Movies
 async def recommendations_dialog_movies(update: Update, context):
-    await update.callback_query.answer()
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
         "movies_genre_action": "Екшн (Бойовик)",
         "movies_genre_detective": "Детектив",
@@ -284,9 +284,9 @@ async def recommendations_dialog_movies(update: Update, context):
         "movies_genre_animation": "Анімація (мультиплікація)",
         "movies_genre_exit": "закінчити пошук"
     })
+    await update.callback_query.answer()
 
 async def recommendations_dialog_movies_genre(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     if query == "movies_genre_exit":
         return await recommendations(update, context)
@@ -308,9 +308,9 @@ async def recommendations_dialog_movies_genre(update: Update, context):
         "mov_next": "змінити жанр",
         "mov_exit": "закінчити пошук"
     })
+    await update.callback_query.answer()
 
 async def recommendations_dialog_movies_buttons(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
     if query == "mov_more":
@@ -321,6 +321,7 @@ async def recommendations_dialog_movies_buttons(update: Update, context):
     elif query == "mov_exit":
         recommendations.list_genre = None
         await recommendations(update, context)
+    await update.callback_query.answer()
 
 # Sounds
 async def recommendations_dialog_sounds(update: Update, context):
@@ -339,7 +340,6 @@ async def recommendations_dialog_sounds(update: Update, context):
     })
 
 async def recommendations_dialog_sounds_genre(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     if query == "sounds_genre_exit":
         return await recommendations(update, context)
@@ -361,9 +361,9 @@ async def recommendations_dialog_sounds_genre(update: Update, context):
         "muz_next": "змінити жанр",
         "muz_exit": "закінчити пошук"
     })
+    await update.callback_query.answer()
 
 async def recommendations_dialog_sounds_buttons(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
     if query == "muz_more":
@@ -374,10 +374,10 @@ async def recommendations_dialog_sounds_buttons(update: Update, context):
     elif query == "muz_exit":
         recommendations.list_genre = None
         await recommendations(update, context)
+    await update.callback_query.answer()
 
 # Books
 async def recommendations_dialog_books(update: Update, context):
-    await update.callback_query.answer()
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
         "books_genre_fantasy": "Фантастика та фентезі",
         "books_genre_detectives": "Детективи та трилери",
@@ -388,9 +388,9 @@ async def recommendations_dialog_books(update: Update, context):
         "books_genre_non_fiction": "Нон-фікшн",
         "books_genre_exit": "закінчити пошук"
     })
+    await update.callback_query.answer()
 
 async def recommendations_dialog_books_genre(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     if query == "books_genre_exit":
         return await recommendations(update, context)
@@ -412,9 +412,9 @@ async def recommendations_dialog_books_genre(update: Update, context):
         "books_next": "змінити жанр",
         "books_exit": "закінчити пошук"
     })
+    await update.callback_query.answer()
 
 async def recommendations_dialog_books_buttons(update: Update, context):
-    await update.callback_query.answer()
     query = update.callback_query.data
     # print(query)
     if query == "books_more":
@@ -425,7 +425,7 @@ async def recommendations_dialog_books_buttons(update: Update, context):
     elif query == "books_exit":
         recommendations.list_genre = None
         await recommendations(update, context)
-
+    await update.callback_query.answer()
 
 
 # 1.3.1 Використання ф-ції Dialog для створення режиму використання
