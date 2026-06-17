@@ -210,6 +210,8 @@ async def quiz_button_dialog(update: Update, context):
     # print("question_text", question_text.text)
     await update.callback_query.answer()
 
+counter_ok = 0
+counter_total = 0
 async def quiz_dialog(update: Update, context):
     user_answer = update.message.text
     # print("user_answer", user_answer)
@@ -220,9 +222,18 @@ async def quiz_dialog(update: Update, context):
         "thema_next": "змінити тему",
         "thema_exit": "закінчити quiz"
     })
-    # await send_text(update, context, f"Загальна кількість: {count_total}. Вірно: {count_ok}")
+    global counter_ok
+    global counter_total
+    if answer_gpt == "Правильно!":
+        counter_ok = counter_ok + 1
+        counter_total = counter_total +1
+    else:
+        counter_total= counter_total + 1
+    await send_text(update, context, f"Загальна кількість: {counter_total}. Вірно: {counter_ok}")
 
 async def quiz_dialog_button_next(update: Update, context):
+    global counter_ok
+    global counter_total
     query = update.callback_query.data
     if query == "thema_more":
         await quiz_button_dialog(update, context)
@@ -232,6 +243,8 @@ async def quiz_dialog_button_next(update: Update, context):
     elif query == "thema_exit":
         quiz.list_thema = quiz.questions = None
         dialog.mode = 'default'
+        counter_ok = 0
+        counter_total = 0
         await start(update, context)
     await update.callback_query.answer()
 
