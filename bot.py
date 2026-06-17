@@ -1,5 +1,6 @@
 # from telegram import Update
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, MessageHandler, \
+    filters, CallbackContext
 
 from gpt import ChatGptService
 # from util import (load_message, load_prompt, send_text, send_image, send_text_buttons, show_main_menu,
@@ -31,7 +32,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         'talk': 'Поговорити з відомою особистістю 👤',
         'quiz': 'Взяти участь у квізі ❓',
 # 1.34 Додавання таска 5 "Рекомендації щодо фільмів та книг"
-        'recommendations': 'Рекомендації фільми, книги, музика...'
+        'recommendations': 'Рекомендації фільми, книги, музика...',
+        'resume': 'Допомога в резюме!'
     })
 
 
@@ -50,6 +52,8 @@ async def status(update: Update, context):
         await quiz_dialog(update, context)
     elif dialog.mode == "recommendations":
         await recommendations(update, context)
+    elif dialog.mode == "resume":
+        await resume_dialog(update, context)
 
 
 ####################
@@ -249,7 +253,7 @@ async def quiz_dialog_button_next(update: Update, context):
     await update.callback_query.answer()
 
 ####################
-# task_5
+# task_5_1
 # 1.37 Ф-ція recommendations рекомендації фільмів, музики, книг
 async def recommendations(update: Update, context):
     dialog.mode = "recommendations"
@@ -279,6 +283,7 @@ async def recommendations_dialog(update: Update, context):
 
 # Movies
 async def recommendations_dialog_movies(update: Update, context):
+    await send_image(update, context, "movies")
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
         "movies_genre_action": "Екшн (Бойовик)",
         "movies_genre_detective": "Детектив",
@@ -338,7 +343,7 @@ async def recommendations_dialog_movies_buttons(update: Update, context):
 
 # Sounds
 async def recommendations_dialog_sounds(update: Update, context):
-    await update.callback_query.answer()
+    await send_image(update, context, "sounds")
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
         "sounds_genre_pop": "Поп (Популярна)",
         "sounds_genre_rock": "Рок музика",
@@ -351,6 +356,7 @@ async def recommendations_dialog_sounds(update: Update, context):
         "sounds_genre_rhythm": "R&B (Ритм-н-блюз)",
         "sounds_genre_exit": "закінчити пошук"
     })
+    await update.callback_query.answer()
 
 async def recommendations_dialog_sounds_genre(update: Update, context):
     query = update.callback_query.data
@@ -391,6 +397,7 @@ async def recommendations_dialog_sounds_buttons(update: Update, context):
 
 # Books
 async def recommendations_dialog_books(update: Update, context):
+    await send_image(update, context, "books")
     await send_text_buttons(update, context, "Обери свій улюблений жанр:", {
         "books_genre_fantasy": "Фантастика та фентезі",
         "books_genre_detectives": "Детективи та трилери",
@@ -441,6 +448,34 @@ async def recommendations_dialog_books_buttons(update: Update, context):
     await update.callback_query.answer()
 
 
+####################
+# task_5_2
+async def resume(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    dialog.mode = "resume"
+    await send_image(update, context, "resume")
+    await send_text(update, context, load_message("resume"))
+
+async def resume_dialog(update: Update, context):
+    resume_text = update.message.text
+    prompt = load_prompt("resume")
+    response = await chat_gpt.send_question(prompt, resume_text)
+    await send_text(update, context, response)
+    await send_text_buttons(update, context, text="Сподіваюсь сподобалось!", buttons={
+        "resume_next": "Сформувати нове резюме",
+        "resume_exit": "Закінчити"
+    })
+
+async def resume_dialog_buttons(update: Update, context):
+    query = update.callback_query.data
+    if query == "resume_next":
+        await resume(update, context)
+    elif query == "resume_exit":
+        dialog.mode = "default"
+        await start(update, context)
+    await update.callback_query.answer()
+
+
+####################
 # 1.3.1 Використання ф-ції Dialog для створення режиму використання
 # task_1_2
 dialog = Dialog()
@@ -463,11 +498,12 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("random", random))
 # 1.15 Запускаємо обране посилання "gpt" та ф-ції gpt
 app.add_handler(CommandHandler("gpt", gpt))
-# 1.20 Запускаємо ф-цію gpt_dialog, обробник діалогу
+# 1.20 Запускаємо ф-цію dialog, обробник діалогів
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, status))
 app.add_handler(CommandHandler("talk", talk))
 app.add_handler(CommandHandler("quiz", quiz))
 app.add_handler(CommandHandler("recommendations", recommendations))
+app.add_handler(CommandHandler("resume", resume))
 
 #########
 # Зареєструвати обробник колбеку можна так:
@@ -486,6 +522,7 @@ app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_genre, patter
 app.add_handler(CallbackQueryHandler(recommendations_dialog_sounds_buttons, pattern='^muz.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_books_genre, pattern='^books_genre.*'))
 app.add_handler(CallbackQueryHandler(recommendations_dialog_books_buttons, pattern='^books.*'))
+app.add_handler(CallbackQueryHandler(resume_dialog_buttons, pattern='^resume.*'))
 
 
 # app.add_handler(CallbackQueryHandler(default_callback_handler))
